@@ -91,6 +91,58 @@ function distance() {
   })
   createHelpTooltip()   // 创建那个helpTooltipElement方法
   map.addLayer(layer)  // 把图层添加到地图
+  draw = new Draw({
+    source,  // 这个数据源就是我们最开始的那个数据源，这是简写，实际上是 source:source,
+    type: 'LineString',  // 绘制线
+    style: new Style({   // 绘制完成之前线的样式，这是官网的样式，需要的话自己可以修改成自己想要的样子
+      fill: new Fill({
+        color: 'rgba(255, 255, 255, 0.2)',
+      }),
+      stroke: new Stroke({
+        color: 'rgba(0, 0, 0, 0.5)',
+        lineDash: [10, 10],
+        width: 4,
+      }),
+      image: new CircleStyle({
+        radius: 5,
+        stroke: new Stroke({
+          color: 'rgba(0, 0, 0, 0.7)',
+        }),
+        fill: new Fill({
+          color: 'rgba(255, 255, 255, 0.2)',
+        }),
+      }),
+    }),
+  });
+  map.addInteraction(draw);
+  // 开始监听绘制
+  draw.on('drawstart', (evt) => {
+    feature = evt.feature;  // feature就是全局的
+    let tooltipCoord = evt.coordinate;  // 鼠标当前的位置 
+    listener = feature.getGeometry().on('change', function (evt) {
+      const geom = evt.target;
+      let output = formatLength(geom);   // 距离的格式
+      tooltipCoord = geom.getLastCoordinate();    // 设置鼠标位置改变后的实时位置
+      measureTooltipElement.innerHTML = output;  // 设置提示框的内容，就是距离
+      measureTooltip.setPosition(tooltipCoord);  // 设置距离提示框的位置
+    });
+  });
+
+  // 格式化长度， 直接官网代码
+  const formatLength = function (line) {
+    const length = getLength(line);
+    let output;
+    if (length > 100) {
+      output = Math.round((length / 1000) * 100) / 100 + ' ' + 'km';
+    } else {
+      output = Math.round(length * 100) / 100 + ' ' + 'm';
+    }
+    return output;
+  };
+
+  this.createMeasureTooltip()  // 创建那个距离的提示框
+
+
 }
 
 function createHelpTooltip() {
@@ -106,6 +158,9 @@ function createHelpTooltip() {
   });
   map.addOverlay(helpTooltip);
 }
+
+
+
 
 
 
